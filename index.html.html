@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מתכנן הון משפחתי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface-high: #1c2230;
+    --border: #2a3444; --accent: #00e5a0; --accent-dim: rgba(0,229,160,0.1);
+    --accent-mid: rgba(0,229,160,0.35); --warn: #ff5757; --warn-dim: rgba(255,87,87,0.1);
+    --gold: #fbbf24; --blue: #60a5fa; --blue-dim: rgba(96,165,250,0.12);
+    --text: #e6edf3; --text-mid: #8b949e; --text-dim: #4a5568;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: rtl; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── DISCLAIMER ── */
+  #screen-disclaimer {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 0; padding: 24px;
+    background: radial-gradient(ellipse at top, #0f1f18 0%, var(--bg) 70%);
+  }
+  .disc-box {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 24px; max-width: 640px; width: 100%; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .disc-header {
+    background: linear-gradient(135deg, #1a1200, #1a0e00);
+    border-bottom: 1px solid #3a2800; padding: 28px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .disc-icon { font-size: 36px; flex-shrink: 0; }
+  .disc-header-text h2 { font-size: 20px; font-weight: 800; color: var(--gold); margin-bottom: 4px; }
+  .disc-header-text p { font-size: 13px; color: #a07830; }
+  .disc-body { padding: 28px 32px; }
+  .disc-legal {
+    background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 12px; padding: 18px 20px; margin-bottom: 24px;
+    font-size: 14px; line-height: 1.8; color: #c9a84c;
+  }
+  .disc-legal strong { color: var(--gold); }
+  .disc-instructions { margin-bottom: 28px; }
+  .disc-instructions h3 { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 14px; }
+  .inst-step {
+    display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px;
+  }
+  .inst-num {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim);
+    border: 1px solid var(--accent-mid); color: var(--accent); font-size: 13px;
+    font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .inst-text { font-size: 14px; color: var(--text-mid); line-height: 1.6; padding-top: 4px; }
+  .inst-text strong { color: var(--text); }
+  .disc-confirm {
+    width: 100%; padding: 16px; border-radius: 12px; border: none; cursor: pointer;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    background: var(--accent); color: var(--bg); transition: all .2s;
+  }
+  .disc-confirm:hover { background: #00c988; transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-dim); }
+
+  /* ── SELECT ── */
+  #screen-select {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 48px; padding: 32px;
+  }
+  .select-title { text-align: center; }
+  .select-tag { font-size: 12px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; }
+  .select-h1 { font-size: clamp(30px, 5vw, 52px); font-weight: 900; line-height: 1.15; }
+  .select-sub { color: var(--text-mid); margin-top: 10px; font-size: 16px; }
+  .mode-cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 780px; width: 100%; }
+  .mode-card {
+    flex: 1 1 300px; max-width: 360px; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 20px; padding: 36px 32px;
+    cursor: pointer; transition: all .2s; text-align: right;
+  }
+  .mode-card:hover { border-color: var(--accent); background: var(--surface-high); transform: translateY(-4px); box-shadow: 0 14px 44px var(--accent-dim); }
+  .mode-card-icon { font-size: 40px; margin-bottom: 16px; }
+  .mode-card-tag { font-size: 11px; letter-spacing: 3px; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+  .mode-card-title { font-size: 21px; font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+  .mode-card-desc { font-size: 14px; color: var(--text-mid); line-height: 1.7; }
+  .mode-card-btn { display: inline-block; margin-top: 24px; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-mid); border-radius: 8px; padding: 8px 20px; font-size: 13px; font-weight: 600; }
+
+  /* ── APP ── */
+  #screen-app { min-height: 100vh; }
+  .app-header {
+    border-bottom: 1px solid var(--border); padding: 14px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: rgba(13,17,23,0.93);
+    backdrop-filter: blur(14px); z-index: 100; flex-wrap: wrap; gap: 10px;
+  }
+  .header-logo { font-size: 15px; font-weight: 700; }
+  .header-logo span { font-size: 11px; color: var(--text-mid); margin-right: 8px; font-weight: 400; }
+  .mode-toggle { display: flex; gap: 6px; align-items: center; }
+  .mode-toggle label { font-size: 13px; color: var(--text-mid); }
+  .toggle-btn { padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; transition: all .15s; }
+  .toggle-btn.active { background: var(--accent); color: var(--bg); }
+  .toggle-btn:not(.active) { background: var(--surface); color: var(--text-mid); }
+  .back-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 7px 16px; color: var(--text-mid); cursor: pointer; font-size: 13px; font-family: inherit; transition: all .15s; }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .app-layout { display: grid; grid-template-columns: 340px 1fr; gap: 28px; max-width: 1120px; margin: 0 auto; padding: 32px 24px; align-items: start; }
+  @media (max-width: 900px) { .app-layout { grid-template-columns: 1fr; } }
+
+  /* Panels / Fields */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 18px; }
+  .panel-title { font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: 1px; margin-bottom: 18px; }
+  .field { margin-bottom: 16px; }
+  .field label { font-size: 12px; color: var(--text-mid); letter-spacing: 0.4px; display: block; margin-bottom: 6px; }
+  .field input[type=text], .field input[type=number] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-family: inherit; font-size: 15px; outline: none; transition: border-color .15s; }
+  .field input:focus { border-color: var(--accent); }
+  .gender-row { display: flex; gap: 8px; }
+  .gender-btn { flex: 1; padding: 10px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--text-mid); font-family: inherit; font-weight: 600; font-size: 14px; transition: all .15s; }
+  .gender-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+  .slider-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: baseline; }
+  .slider-label { font-size: 12px; color: var(--text-mid); }
+  .slider-val { font-size: 15px; font-weight: 700; color: var(--accent); }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; cursor: pointer; }
+  .slider-minmax { display: flex; justify-content: space-between; margin-top: 4px; }
+  .slider-minmax span { font-size: 11px; color: var(--text-dim); }
+  .child-card { background: var(--surface-high); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; margin-bottom: 14px; }
+  .child-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .child-index { font-size: 13px; color: var(--accent); font-weight: 600; }
+  .child-remove { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; line-height: 1; }
+  .child-remove:hover { color: var(--warn); }
+  .child-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .alloc-card { padding: 14px 16px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; border: 1.5px solid var(--border); background: transparent; transition: all .15s; }
+  .alloc-card.active { border-color: var(--accent); background: var(--accent-dim); }
+  .alloc-card-title { font-size: 14px; font-weight: 600; }
+  .alloc-card.active .alloc-card-title { color: var(--accent); }
+  .alloc-card-sub { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+  .add-child-btn { background: var(--accent-dim); border: 1px solid var(--accent-mid); color: var(--accent); border-radius: 8px; padding: 8px 18px; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 600; }
+
+  /* Results */
+  .hero { border-radius: 20px; padding: 28px 32px; margin-bottom: 22px; border: 1.5px solid var(--accent); background: linear-gradient(135deg, var(--surface), var(--surface-high)); box-shadow: 0 0 50px var(--accent-dim); transition: all .3s; }
+  .hero.danger { border-color: var(--warn); background: linear-gradient(135deg,#1a0e0e,#180f0f); box-shadow: 0 0 50px var(--warn-dim); }
+  .hero-tag { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .hero.danger .hero-tag { color: var(--warn); }
+  .hero-amount { font-size: 48px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .hero.danger .hero-amount { color: var(--warn); }
+  .hero-desc { font-size: 16px; color: var(--text-mid); margin-top: 8px; }
+  .hero-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 18px; }
+  .stat-label { font-size: 11px; color: var(--text-mid); margin-bottom: 4px; letter-spacing: 0.4px; }
+  .stat-val { font-size: 22px; font-weight: 800; }
+  .deficit-alert { background: var(--warn-dim); border: 1px solid rgba(255,87,87,.3); border-radius: 10px; padding: 12px 16px; color: var(--warn); font-size: 14px; margin-top: 14px; line-height: 1.6; }
+
+  /* Conservative button & box */
+  .conservative-btn {
+    width: 100%; padding: 14px 20px; border-radius: 12px;
+    border: 1.5px solid var(--blue); background: var(--blue-dim);
+    color: var(--blue); font-family: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-bottom: 22px; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .conservative-btn:hover { background: rgba(96,165,250,0.2); box-shadow: 0 6px 20px var(--blue-dim); }
+  .conservative-box {
+    border-radius: 20px; padding: 24px 28px; margin-bottom: 22px;
+    border: 1.5px solid var(--blue); background: linear-gradient(135deg, #0d1520, #111825);
+    box-shadow: 0 0 36px var(--blue-dim);
+  }
+  .conservative-box .hero-tag { color: var(--blue); }
+  .conservative-box .hero-amount { color: var(--blue); font-size: 40px; }
+  .conservative-comparison {
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(96,165,250,0.15);
+    display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  .comp-item { flex: 1; min-width: 120px; }
+  .comp-label { font-size: 11px; color: var(--text-mid); margin-bottom: 4px; }
+  .comp-val { font-size: 18px; font-weight: 800; }
+
+  /* Sensitivity */
+  .sens-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  @media (max-width: 600px) { .sens-grid { grid-template-columns: 1fr; } }
+  .sens-card { background: var(--surface-high); border-radius: 12px; padding: 16px 18px; border: 1px solid var(--border); }
+  .sens-label { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .sens-status { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .sens-detail { font-size: 12px; color: var(--text-mid); }
+
+  /* Chart / Table */
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; margin-bottom: 22px; }
+  .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 18px; }
+  .chart-legend { display: flex; gap: 20px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-mid); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 22px; }
+  .table-toggle { width: 100%; background: none; border: none; padding: 18px 28px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; }
+  .table-toggle span:last-child { color: var(--text-mid); font-size: 13px; font-weight: 400; }
+  .flow-table { width: 100%; border-collapse: collapse; font-size: 13px; direction: rtl; }
+  .flow-table th { padding: 12px 16px; background: var(--surface-high); color: var(--text-mid); font-weight: 600; text-align: right; border-bottom: 1px solid var(--border); }
+  .flow-table td { padding: 12px 16px; border-bottom: 1px solid rgba(42,52,68,.4); }
+  .flow-table tr:nth-child(even) td { background: rgba(28,34,48,.4); }
+  .overflow-x { overflow-x: auto; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text-mid); font-size: 16px; gap: 14px; border: 1px dashed var(--border); border-radius: 20px; }
+  .empty-state .emoji { font-size: 52px; }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN: DISCLAIMER ══ -->
+<div id="screen-disclaimer" class="screen active">
+  <div class="disc-box">
+    <div class="disc-header">
+      <div class="disc-icon">⚠️</div>
+      <div class="disc-header-text">
+        <h2>הכלי אינו מהווה ייעוץ פיננסי או פנסיוני</h2>
+        <p>נא קרא בעיון לפני השימוש</p>
+      </div>
+    </div>
+    <div class="disc-body">
+      <div class="disc-legal">
+        <strong>הצהרת אחריות:</strong> השימוש בכלי זה הוא לצורך <strong>הדמיה אישית בלבד</strong>. התוצאות המוצגות מבוססות על הנחות שהמשתמש מזין ואינן מהוות תחליף לייעוץ פיננסי, פנסיוני, או השקעות מקצועי.<br><br>
+        לפני קבלת כל החלטה פיננסית — <strong>פנו ליועץ מוסמך.</strong>
+      </div>
+
+      <div class="disc-instructions">
+        <h3>📖 איך משתמשים בכלי?</h3>
+        <div class="inst-step">
+          <div class="inst-num">1</div>
+          <div class="inst-text"><strong>בחר מצב:</strong> "כמה צריך לחסוך?" — המערכת מחשבת את ההפקדה המינימלית. "מה הכסף שלי שווה?" — הגדר הפקדה וראה כמה כל ילד יקבל.</div>
+        </div>
+        <div class="inst-step">
+          <div class="inst-num">2</div>
+          <div class="inst-text"><strong>הגדר פרמטרים כלליים:</strong> חיסכון קיים, תשואה משוערת ואינפלציה.</div>
+        </div>
+        <div class="inst-step">
+          <div class="inst-num">3</div>
+          <div class="inst-text"><strong>הוסף ילדים:</strong> שם, מגדר, שנת לידה, יעד כספי לחתונה ולדירה.</div>
+        </div>
+        <div class="inst-step">
+          <div class="inst-num">4</div>
+          <div class="inst-text"><strong>קרא את הגרף:</strong> נקודות ירוקות = אירוע עמד. נקודות אדומות = גרעון. לחץ על <strong>חישוב שמרני</strong> לראות תרחיש בתשואה של 4.5%.</div>
+        </div>
+        <div class="inst-step">
+          <div class="inst-num">5</div>
+          <div class="inst-text"><strong>הצג פירוט:</strong> לחץ על "טבלת תזרים מפורטת" לראות את כל האירועים, המס ויחס הכיסוי שנה-שנה.</div>
+        </div>
+      </div>
+
+      <button class="disc-confirm" onclick="confirmDisclaimer()">✅ קראתי והבנתי — כניסה לכלי</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: SELECT ══ -->
+<div id="screen-select" class="screen">
+  <div class="select-title">
+    <div class="select-tag">מתכנן הון משפחתי</div>
+    <h1 class="select-h1">מה תרצה לבדוק?</h1>
+    <p class="select-sub">בחר את נקודת המוצא שלך</p>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="startApp('target')">
+      <div class="mode-card-icon">🎯</div>
+      <div class="mode-card-tag">מצב יעד</div>
+      <div class="mode-card-title">כמה אני צריך לחסוך?</div>
+      <div class="mode-card-desc">הגדר יעדים לכל ילד — המערכת מחשבת את ההפקדה החודשית המינימלית הנדרשת</div>
+      <div class="mode-card-btn">התחל ←</div>
+    </div>
+    <div class="mode-card" onclick="startApp('budget')">
+      <div class="mode-card-icon">💰</div>
+      <div class="mode-card-tag">מצב תקציב</div>
+      <div class="mode-card-title">מה הכסף שלי שווה?</div>
+      <div class="mode-card-desc">הגדר כמה אתה מסוגל לחסוך בחודש — המערכת מחשבת כמה כל ילד יקבל</div>
+      <div class="mode-card-btn">התחל ←</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: APP ══ -->
+<div id="screen-app" class="screen">
+  <div class="app-header">
+    <div class="header-logo">מתכנן הון משפחתי <span>הדמיה אישית בלבד — אינו ייעוץ פיננסי</span></div>
+    <div class="mode-toggle">
+      <label>מצב:</label>
+      <button class="toggle-btn active" id="btn-target" onclick="switchMode('target')">🎯 יעד</button>
+      <button class="toggle-btn" id="btn-budget" onclick="switchMode('budget')">💰 תקציב</button>
+    </div>
+    <button class="back-btn" onclick="goSelect()">← שנה מצב</button>
+  </div>
+
+  <div class="app-layout">
+    <!-- LEFT -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">⚙️ הגדרות כלליות</div>
+        <div class="field">
+          <label>חיסכון קיים (₪)</label>
+          <input type="number" id="inp-balance" value="211363" oninput="calculate()">
+        </div>
+        <div id="budget-deposit-wrap" style="display:none; margin-bottom:16px;">
+          <div class="slider-row">
+            <span class="slider-label">הפקדה חודשית</span>
+            <span class="slider-val" id="lbl-deposit">₪3,075</span>
+          </div>
+          <input type="range" id="sl-deposit" min="500" max="10000" step="50" value="3075" oninput="syncSlider('deposit');calculate()">
+          <div class="slider-minmax"><span>₪500</span><span>₪10,000</span></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div class="slider-row">
+            <span class="slider-label">תשואה שנתית משוערת</span>
+            <span class="slider-val" id="lbl-return">7.0%</span>
+          </div>
+          <input type="range" id="sl-return" min="3" max="12" step="0.5" value="7" oninput="syncSlider('return');calculate()">
+          <div class="slider-minmax"><span>3%</span><span>12%</span></div>
+        </div>
+        <div>
+          <div class="slider-row">
+            <span class="slider-label">אינפלציה משוערת</span>
+            <span class="slider-val" id="lbl-inflation">2.0%</span>
+          </div>
+          <input type="range" id="sl-inflation" min="1" max="5" step="0.5" value="2" oninput="syncSlider('inflation');calculate()">
+          <div class="slider-minmax"><span>1%</span><span>5%</span></div>
+        </div>
+      </div>
+
+      <div class="panel" id="alloc-panel" style="display:none;">
+        <div class="panel-title">📐 שיטת חלוקה</div>
+        <div class="alloc-card active" id="alloc-wedding" onclick="setAlloc('wedding')">
+          <div class="alloc-card-title">חתונה קודם</div>
+          <div class="alloc-card-sub">הבטח סכום לחתונה, השאר לדירה</div>
+        </div>
+        <div class="alloc-card" id="alloc-apartment" onclick="setAlloc('apartment')">
+          <div class="alloc-card-title">דירה קודם</div>
+          <div class="alloc-card-sub">הבטח סכום לדירה, השאר לחתונה</div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="field" id="wedding-fixed-wrap">
+            <label>סכום מובטח לחתונה (₪)</label>
+            <input type="number" id="inp-wedding-fixed" value="80000" oninput="calculate()">
+          </div>
+          <div class="field" id="apartment-fixed-wrap" style="display:none;">
+            <label>סכום מובטח לדירה (₪)</label>
+            <input type="number" id="inp-apartment-fixed" value="150000" oninput="calculate()">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">👨‍👧‍👦 ילדים</div>
+          <button class="add-child-btn" onclick="addChild()">+ הוסף ילד</button>
+        </div>
+        <div id="children-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="results-panel">
+      <div class="empty-state">
+        <div class="emoji">📊</div>
+        <div>הוסף ילד כדי לראות את הסימולציה</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let appMode = 'target', allocMode = 'wedding';
+let children = [], nextId = 1;
+let chartInstance = null, conservativeVisible = false;
+const CY = new Date().getFullYear();
+const CONSERVATIVE_RETURN = 0.045;
+
+// ══════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════
+function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function confirmDisclaimer() { show('screen-select'); }
+function startApp(mode) { appMode=mode; show('screen-app'); applyMode(); if(!children.length) addChild(); calculate(); }
+function goSelect() { show('screen-select'); }
+function switchMode(m) { appMode=m; applyMode(); conservativeVisible=false; calculate(); }
+function applyMode() {
+  document.getElementById('btn-target').className='toggle-btn'+(appMode==='target'?' active':'');
+  document.getElementById('btn-budget').className='toggle-btn'+(appMode==='budget'?' active':'');
+  document.getElementById('budget-deposit-wrap').style.display=appMode==='budget'?'block':'none';
+  document.getElementById('alloc-panel').style.display=appMode==='budget'?'block':'none';
+}
+function setAlloc(m) {
+  allocMode=m;
+  document.getElementById('alloc-wedding').className='alloc-card'+(m==='wedding'?' active':'');
+  document.getElementById('alloc-apartment').className='alloc-card'+(m==='apartment'?' active':'');
+  document.getElementById('wedding-fixed-wrap').style.display=m==='wedding'?'block':'none';
+  document.getElementById('apartment-fixed-wrap').style.display=m==='apartment'?'block':'none';
+  calculate();
+}
+
+// ══════════════════════════════════════════════════
+// SLIDERS
+// ══════════════════════════════════════════════════
+function syncSlider(n) {
+  if(n==='deposit'){const v=+document.getElementById('sl-deposit').value;document.getElementById('lbl-deposit').textContent='₪'+v.toLocaleString('he-IL');}
+  else if(n==='return'){const v=+document.getElementById('sl-return').value;document.getElementById('lbl-return').textContent=v.toFixed(1)+'%';}
+  else if(n==='inflation'){const v=+document.getElementById('sl-inflation').value;document.getElementById('lbl-inflation').textContent=v.toFixed(1)+'%';}
+}
+
+// ══════════════════════════════════════════════════
+// CHILDREN
+// ══════════════════════════════════════════════════
+function defMarriage(g){return g==='f'?19:22;}
+function defApartment(g){return g==='f'?26:28;}
+function addChild(){const id=nextId++;children.push({id,name:'',gender:'m',birthYear:2015,marriageAge:22,apartmentAge:28,marriageAmount:100000,apartmentAmount:150000});renderChildren();calculate();}
+function removeChild(id){children=children.filter(c=>c.id!==id);renderChildren();calculate();}
+function updateChild(id,field,value){
+  const c=children.find(c=>c.id===id);if(!c)return;
+  if(['birthYear','marriageAge','apartmentAge','marriageAmount','apartmentAmount'].includes(field))c[field]=+value;
+  else c[field]=value;
+  if(field==='gender'){c.marriageAge=defMarriage(value);c.apartmentAge=defApartment(value);renderChildren();}
+  calculate();
+}
+function renderChildren(){
+  const list=document.getElementById('children-list');
+  list.innerHTML='';
+  children.forEach((c,i)=>{
+    const div=document.createElement('div');
+    div.className='child-card';
+    div.innerHTML=`
+      <div class="child-card-header">
+        <span class="child-index">ילד #${i+1}</span>
+        <button class="child-remove" onclick="removeChild(${c.id})">✕</button>
+      </div>
+      <div class="child-grid">
+        <div class="field"><label>שם</label><input type="text" value="${c.name}" placeholder="שם הילד" oninput="updateChild(${c.id},'name',this.value)"></div>
+        <div class="field"><label>מגדר</label><div class="gender-row">
+          <button class="gender-btn ${c.gender==='m'?'active':''}" onclick="updateChild(${c.id},'gender','m')">בן</button>
+          <button class="gender-btn ${c.gender==='f'?'active':''}" onclick="updateChild(${c.id},'gender','f')">בת</button>
+        </div></div>
+        <div class="field"><label>שנת לידה</label><input type="number" value="${c.birthYear}" min="1990" max="${CY}" oninput="updateChild(${c.id},'birthYear',this.value)"></div>
+        <div class="field"><label>גיל חתונה</label><input type="number" value="${c.marriageAge}" min="18" max="35" oninput="updateChild(${c.id},'marriageAge',this.value)"></div>
+        <div class="field"><label>יעד חתונה (₪)</label><input type="number" value="${c.marriageAmount}" oninput="updateChild(${c.id},'marriageAmount',this.value)"></div>
+        <div class="field"><label>גיל דירה</label><input type="number" value="${c.apartmentAge}" min="20" max="40" oninput="updateChild(${c.id},'apartmentAge',this.value)"></div>
+        <div class="field"><label>יעד דירה (₪)</label><input type="number" value="${c.apartmentAmount}" oninput="updateChild(${c.id},'apartmentAmount',this.value)"></div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// ENGINE
+// ══════════════════════════════════════════════════
+function runSim({kids, initialBalance, monthlyDeposit, annualReturn}){
+  const mr=Math.pow(1+annualReturn,1/12)-1;
+  const events=[];
+  kids.forEach(c=>{
+    events.push({year:c.birthYear+c.marriageAge,amount:c.marriageAmount,desc:(c.name||'ילד')+' – חתונה',type:'marriage'});
+    events.push({year:c.birthYear+c.apartmentAge,amount:c.apartmentAmount,desc:(c.name||'ילד')+' – דירה',type:'apartment'});
+  });
+  events.sort((a,b)=>a.year-b.year);
+  const evByYear={};
+  events.forEach(e=>{if(!evByYear[e.year])evByYear[e.year]=[];evByYear[e.year].push(e);});
+  let bal=initialBalance, cb=initialBalance;
+  const rows=[],milestones=[],defYears=[];
+  const endYear=events.length?Math.max(...events.map(e=>e.year))+1:CY+5;
+  for(let yr=CY;yr<=endYear;yr++){
+    for(let m=0;m<12;m++){bal=bal*(1+mr)+monthlyDeposit;cb+=monthlyDeposit;}
+    (evByYear[yr]||[]).forEach(ev=>{
+      const pf=bal>0?Math.max(0,(bal-cb)/bal):0;
+      const gross=ev.amount/(1-pf*0.25);
+      const tax=gross*pf*0.25;
+      const ok=bal>=gross;
+      milestones.push({year:yr,desc:ev.desc,amount:ev.amount,gross,tax,balance:bal,ok,type:ev.type});
+      const bw=gross*(1-pf);bal-=gross;cb=Math.max(0,cb-bw);
+    });
+    if(bal<0)defYears.push(yr);
+    rows.push({year:yr,balance:bal,deficit:bal<0});
+  }
+  const allOk=milestones.every(m=>m.ok)&&!defYears.length;
+  const minRatio=milestones.length?Math.min(...milestones.map(m=>m.balance>0?m.balance/m.gross:-99)):99;
+  return{rows,milestones,allOk,minRatio,finalBalance:bal,deficitYears:defYears};
+}
+
+function goalSeek(kids,initialBalance,annualReturn){
+  for(let d=100;d<=25000;d+=25){
+    if(runSim({kids,initialBalance,monthlyDeposit:d,annualReturn}).allOk)return d;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════
+// FORMAT
+// ══════════════════════════════════════════════════
+function fmt(n){if(n==null||isNaN(n))return'—';return'₪'+Math.round(n).toLocaleString('he-IL');}
+function fmtK(n){if(Math.abs(n)>=1e6)return'₪'+(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return'₪'+Math.round(n/1000)+'K';return fmt(n);}
+
+// ══════════════════════════════════════════════════
+// CALCULATE
+// ══════════════════════════════════════════════════
+function calculate(){
+  if(!children.length){
+    document.getElementById('results-panel').innerHTML=`<div class="empty-state"><div class="emoji">📊</div><div>הוסף ילד כדי לראות את הסימולציה</div></div>`;
+    return;
+  }
+  const initialBalance=+document.getElementById('inp-balance').value||0;
+  const annualReturn=+document.getElementById('sl-return').value/100;
+  let deposit;
+  if(appMode==='target'){
+    deposit=goalSeek(children,initialBalance,annualReturn);
+    if(!deposit){showError('לא נמצאה הפקדה אפשרית עד ₪25,000');return;}
+  } else {
+    deposit=+document.getElementById('sl-deposit').value;
+  }
+  const result=runSim({kids:children,initialBalance,monthlyDeposit:deposit,annualReturn});
+  conservativeVisible=false;
+  renderResults(result,deposit,annualReturn,initialBalance);
+}
+
+function showConservative(){
+  const initialBalance=+document.getElementById('inp-balance').value||0;
+  const mainReturn=+document.getElementById('sl-return').value/100;
+  let mainDeposit;
+  if(appMode==='target'){
+    mainDeposit=goalSeek(children,initialBalance,mainReturn)||0;
+  } else {
+    mainDeposit=+document.getElementById('sl-deposit').value;
+  }
+
+  const consResult=runSim({kids:children,initialBalance,monthlyDeposit:mainDeposit,annualReturn:CONSERVATIVE_RETURN});
+  const consBox=document.getElementById('conservative-result');
+  if(!consBox)return;
+
+  if(appMode==='target'){
+    // What deposit needed at 4.5%?
+    const consDeposit=goalSeek(children,initialBalance,CONSERVATIVE_RETURN);
+    const diff=consDeposit?(consDeposit-mainDeposit):null;
+    consBox.innerHTML=`
+      <div class="conservative-box">
+        <div class="hero-tag">🛡️ חישוב שמרני — תשואה ${(CONSERVATIVE_RETURN*100).toFixed(1)}%</div>
+        <div class="hero-amount">${fmt(consDeposit)}</div>
+        <div class="hero-desc">הפקדה חודשית נדרשת בתשואה שמרנית</div>
+        <div class="conservative-comparison">
+          <div class="comp-item">
+            <div class="comp-label">הפקדה בתשואה ${(mainReturn*100).toFixed(1)}%</div>
+            <div class="comp-val" style="color:var(--accent)">${fmt(mainDeposit)}</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-label">הפקדה שמרנית (4.5%)</div>
+            <div class="comp-val" style="color:var(--blue)">${fmt(consDeposit)}</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-label">הפרש חודשי</div>
+            <div class="comp-val" style="color:var(--gold)">${diff!=null?(diff>0?'+':'')+fmt(diff):'—'}</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:var(--text-mid);line-height:1.6;">
+          ${consResult.allOk?'✅ גם בתשואה שמרנית — עם הפקדה זו עומדים בכל היעדים.':'⚠️ בתשואה שמרנית עם אותה הפקדה יש גרעון בשנים: '+consResult.deficitYears.join(', ')}
+        </div>
+      </div>`;
+  } else {
+    // Budget mode: show what happens at 4.5% with same deposit
+    consBox.innerHTML=`
+      <div class="conservative-box">
+        <div class="hero-tag">🛡️ חישוב שמרני — תשואה ${(CONSERVATIVE_RETURN*100).toFixed(1)}%</div>
+        <div class="hero-amount">${fmtK(consResult.finalBalance)}</div>
+        <div class="hero-desc">יתרה סופית בתשואה שמרנית (אותה הפקדה חודשית)</div>
+        <div class="conservative-comparison">
+          <div class="comp-item">
+            <div class="comp-label">יתרה בתשואה ${(mainReturn*100).toFixed(1)}%</div>
+            <div class="comp-val" style="color:var(--accent)">${fmtK(runSim({kids:children,initialBalance,monthlyDeposit:mainDeposit,annualReturn:mainReturn}).finalBalance)}</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-label">יתרה שמרנית (4.5%)</div>
+            <div class="comp-val" style="color:var(--blue)">${fmtK(consResult.finalBalance)}</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-label">אירועים עומדים</div>
+            <div class="comp-val" style="color:${consResult.allOk?'var(--accent)':'var(--warn)'}">${consResult.milestones.filter(m=>m.ok).length}/${consResult.milestones.length}</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:var(--text-mid);line-height:1.6;">
+          ${consResult.allOk?'✅ גם בתשואה שמרנית — עם הפקדה זו עומדים בכל היעדים.':'⚠️ בתשואה שמרנית יש גרעון בשנים: '+consResult.deficitYears.join(', ')+'. שקול להגדיל הפקדה ל-'+fmt(goalSeek(children,initialBalance,CONSERVATIVE_RETURN))+'/חודש.'}
+        </div>
+      </div>`;
+  }
+  conservativeVisible=true;
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+function renderResults(result,deposit,annualReturn,initialBalance){
+  const{rows,milestones,allOk,minRatio,finalBalance,deficitYears}=result;
+  const panel=document.getElementById('results-panel');
+
+  // Hero
+  let heroHtml=`<div class="hero ${allOk?'':'danger'}">
+    <div class="hero-tag">${appMode==='target'?'תוצאת אופטימיזציה':(allOk?'✅ התיק מאוזן':'⚠️ קיים גרעון')}</div>`;
+  if(appMode==='target'){
+    heroHtml+=`<div class="hero-amount">${fmt(deposit)}</div>
+      <div class="hero-desc">הפקדה חודשית מינימלית לעמידה בכל היעדים</div>`;
+  } else {
+    heroHtml+=`<div style="display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;">
+        <div><div style="font-size:13px;color:var(--text-mid);margin-bottom:4px;">הפקדה חודשית</div><div class="hero-amount" style="font-size:36px;">${fmt(deposit)}</div></div>
+        <div style="font-size:22px;color:var(--text-dim);">→</div>
+        <div><div style="font-size:13px;color:var(--text-mid);margin-bottom:4px;">יתרה סופית</div><div class="hero-amount" style="font-size:36px;">${fmtK(finalBalance)}</div></div>
+      </div>`;
+    if(!allOk){const needed=goalSeek(children,initialBalance,annualReturn);heroHtml+=`<div class="deficit-alert">⚠️ גרעון בשנים: ${deficitYears.join(', ')}${needed?' — כדי לאזן: הפקד '+fmt(needed)+'/חודש':''}</div>`;}
+  }
+  heroHtml+=`<div class="hero-stats">
+    <div><div class="stat-label">יתרה סופית</div><div class="stat-val">${fmtK(finalBalance)}</div></div>
+    <div><div class="stat-label">אירועים עומדים</div><div class="stat-val" style="color:${allOk?'var(--accent)':'var(--warn)'}">${milestones.filter(m=>m.ok).length}/${milestones.length}</div></div>
+    <div><div class="stat-label">יחס מינימלי</div><div class="stat-val">${minRatio>0?minRatio.toFixed(2)+'x':'שלילי'}</div></div>
+  </div></div>`;
+
+  // Conservative button
+  const consBtnHtml=`
+    <button class="conservative-btn" onclick="showConservative()">
+      🛡️ חישוב שמרני — מה קורה בתשואה של 4.5%?
+    </button>
+    <div id="conservative-result"></div>`;
+
+  // Sensitivity
+  const scenarios=[
+    {label:'פסימי (5%)',ret:0.05,color:'var(--warn)'},
+    {label:'בסיס ('+( annualReturn*100).toFixed(1)+'%)',ret:annualReturn,color:'var(--gold)'},
+    {label:'אופטימי ('+(Math.min(annualReturn*100+2,15)).toFixed(1)+'%)',ret:Math.min(annualReturn+0.02,0.15),color:'var(--accent)'},
+  ];
+  let sensHtml=`<div class="panel"><div class="panel-title">📊 ניתוח רגישות — תשואות שונות</div><div class="sens-grid">`;
+  scenarios.forEach(s=>{
+    const r=runSim({kids:children,initialBalance,monthlyDeposit:deposit,annualReturn:s.ret});
+    sensHtml+=`<div class="sens-card" style="border-color:${r.allOk?s.color+'44':'var(--warn)44'}">
+      <div class="sens-label" style="color:${s.color}">${s.label}</div>
+      <div class="sens-status" style="color:${r.allOk?'var(--accent)':'var(--warn)'}">${r.allOk?'✅ עומד':'❌ גרעון'}</div>
+      <div class="sens-detail">יתרה: ${fmtK(r.finalBalance)}</div>
+      <div class="sens-detail">יחס מינימלי: ${r.minRatio>0?r.minRatio.toFixed(2)+'x':'שלילי'}</div>
+    </div>`;
+  });
+  sensHtml+=`</div></div>`;
+
+  // Chart
+  const chartHtml=`<div class="chart-wrap">
+    <div class="chart-title">📈 שווי התיק לאורך השנים</div>
+    ${rows.some(r=>r.deficit)?'<div class="deficit-alert" style="margin-bottom:14px;">⚠️ האזורים השליליים בגרף מסמנים גרעון</div>':''}
+    <canvas id="wealth-chart" height="300"></canvas>
+    <div class="chart-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>יתרת תיק</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>אירוע עמד ✅</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--warn)"></span>אירוע גרעון ❌</div>
+    </div>
+  </div>`;
+
+  // Table
+  let tRows='';
+  milestones.forEach(m=>{
+    const ratio=m.balance>0?(m.balance/m.gross).toFixed(2)+'x':'—';
+    tRows+=`<tr>
+      <td style="color:var(--text-mid)">${m.year}</td>
+      <td style="font-weight:600">${m.desc}</td>
+      <td>${fmt(m.amount)}</td>
+      <td style="color:var(--gold)">${fmt(m.tax)}</td>
+      <td>${fmt(m.gross)}</td>
+      <td style="font-weight:700;color:${m.ok?'var(--accent)':'var(--warn)'}">${ratio}</td>
+      <td>${m.ok?'✅':'❌'}</td>
+    </tr>`;
+  });
+  const tableHtml=`<div class="table-wrap">
+    <button class="table-toggle" onclick="toggleTable(this)">
+      <span>📋 טבלת תזרים מפורטת</span><span>הצג פירוט ▼</span>
+    </button>
+    <div id="flow-table-body" style="display:none;"><div class="overflow-x">
+      <table class="flow-table">
+        <thead><tr><th>שנה</th><th>אירוע</th><th>יעד</th><th>מס שולם</th><th>ברוטו נדרש</th><th>יחס</th><th></th></tr></thead>
+        <tbody>${tRows}</tbody>
+      </table>
+    </div></div>
+  </div>`;
+
+  panel.innerHTML=heroHtml+consBtnHtml+sensHtml+chartHtml+tableHtml;
+  drawChart(rows,milestones);
+}
+
+function toggleTable(btn){
+  const body=document.getElementById('flow-table-body');
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  btn.querySelector('span:last-child').textContent=isOpen?'הצג פירוט ▼':'הסתר ▲';
+}
+function showError(msg){document.getElementById('results-panel').innerHTML=`<div class="empty-state" style="border-color:var(--warn);color:var(--warn);"><div class="emoji">⚠️</div><div>${msg}</div></div>`;}
+
+// ══════════════════════════════════════════════════
+// CHART
+// ══════════════════════════════════════════════════
+function drawChart(rows,milestones){
+  const ctx=document.getElementById('wealth-chart');
+  if(!ctx)return;
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  const labels=rows.map(r=>r.year);
+  const data=rows.map(r=>Math.round(r.balance));
+  const msMap={};
+  milestones.forEach(m=>{if(!msMap[m.year])msMap[m.year]=[];msMap[m.year].push(m);});
+  const pointBg=rows.map(r=>{const ms=msMap[r.year];if(!ms)return'transparent';return ms.some(m=>!m.ok)?'#ff5757':'#00e5a0';});
+  const pointR=rows.map(r=>msMap[r.year]?7:0);
+  const gradient=ctx.getContext('2d').createLinearGradient(0,0,0,300);
+  gradient.addColorStop(0,'rgba(0,229,160,0.28)');gradient.addColorStop(1,'rgba(0,229,160,0.01)');
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data,borderColor:'#00e5a0',borderWidth:2.5,backgroundColor:gradient,fill:true,tension:0.35,pointBackgroundColor:pointBg,pointBorderColor:'#0d1117',pointBorderWidth:2,pointRadius:pointR,pointHoverRadius:9}]},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{rtl:true,backgroundColor:'#1c2230',borderColor:'#2a3444',borderWidth:1,titleColor:'#8b949e',bodyColor:'#e6edf3',padding:14,
+          callbacks:{
+            title:items=>items[0].label+'',
+            label:item=>' יתרה: '+fmtK(item.raw),
+            afterBody:items=>{const yr=+items[0].label;const ms=msMap[yr];if(!ms)return[];return ms.map(m=>(m.ok?'✅ ':'❌ ')+m.desc+': '+fmt(m.amount));}
+          }
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(42,52,68,.5)'},ticks:{color:'#8b949e',font:{family:'Heebo',size:12}}},
+        y:{grid:{color:'rgba(42,52,68,.5)'},ticks:{color:'#8b949e',font:{family:'Heebo',size:11},callback:v=>fmtK(v)}}
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
